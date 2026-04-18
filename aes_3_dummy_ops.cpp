@@ -45,16 +45,6 @@ int key[16] = {
 	0xab, 0xf7, 0x15, 0x88,
 	0x09, 0xcf, 0x4f, 0x3c};
 
-
-void randomDelay()
-{
-	volatile int sink = 0;
-	int iterations = rand() % 500;
-	for (int i = 0; i < iterations; ++i)
-		sink++;
-	(void)sink;
-}
-
 array<uint8_t, 16> addRoundKey(const array<uint8_t, 16> &text, const array<uint8_t, 16> &roundKey)
 {
 	array<uint8_t, 16> output{};
@@ -66,12 +56,27 @@ array<uint8_t, 16> addRoundKey(const array<uint8_t, 16> &text, const array<uint8
 	return output;
 }
 
+
 array<uint8_t, 16> subBytes(const array<uint8_t, 16> &text)
 {
 	array<uint8_t, 16> output{};
 	for (size_t i = 0; i < 16; ++i)
 	{
+		
+		for (int d = 0; d < 3; ++d)
+		{
+			volatile uint8_t fake = static_cast<uint8_t>(kSBox[rand() % 256]);
+			(void)fake;
+		}
+
 		output[i] = static_cast<uint8_t>(kSBox[text[i]]);
+
+		
+		for (int d = 0; d < 3; ++d)
+		{
+			volatile uint8_t fake = static_cast<uint8_t>(kSBox[rand() % 256]);
+			(void)fake;
+		}
 	}
 
 	return output;
@@ -237,18 +242,11 @@ array<uint8_t, 16> AES128(const array<uint8_t, 16> &plainText, const array<uint8
 
 	for (size_t round = 1; round <= 9; ++round)
 	{
-
-		
-		randomDelay();
-
 		state = subBytes(state);
 		state = shiftRows(state);
 		state = mixcolumn(state);
 		state = addRoundKey(state, roundKeys[round]);
 	}
-
-
-	randomDelay();
 
 	state = subBytes(state);
 	state = shiftRows(state);
