@@ -1,209 +1,328 @@
 <!doctype html>
 <html>
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Breaking AES-128: Side-Channel Attacks</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reset.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/theme/blood.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/plugin/highlight/atom-one-dark.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reset.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/theme/blood.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/plugin/highlight/atom-one-dark.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
     <style>
-        :root {
-            --primary-accent: #ff4b4b;
-            --secondary-accent: #00d2ff;
-        }
-        body {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            font-family: 'Inter', sans-serif;
-        }
-        .reveal .slides { text-align: left; }
-        .reveal h1, .reveal h2, .reveal h3, .reveal h4 {
-            font-family: 'Inter', sans-serif;
-            font-weight: 800;
-            text-transform: none;
-            letter-spacing: -0.02em;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
-        }
-        
-        .reveal h2 { color: var(--secondary-accent); border-bottom: 2px solid rgba(0,210,255,0.3); padding-bottom: 10px; display: inline-block; margin-bottom: 30px;}
-        .reveal h3 { color: #f1fa8c; font-size: 1.3em; margin-top: 15px; }
-        
-        .reveal p, .reveal li {
-            font-family: 'Inter', sans-serif;
-            font-weight: 300;
-            line-height: 1.6;
-        }
-        
-        .reveal ul { margin-left: 1.5em; }
-        .reveal li { margin-bottom: 15px; }
+      :root {
+        --primary-accent: #ff4b4b;
+        --secondary-accent: #00d2ff;
+      }
+      body {
+        background: linear-gradient(
+          135deg,
+          #1a1a2e 0%,
+          #16213e 50%,
+          #0f3460 100%
+        );
+        font-family: "Inter", sans-serif;
+      }
+      .reveal .slides {
+        text-align: left;
+      }
+      .reveal h1,
+      .reveal h2,
+      .reveal h3,
+      .reveal h4 {
+        font-family: "Inter", sans-serif;
+        font-weight: 800;
+        text-transform: none;
+        letter-spacing: -0.02em;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
+      }
 
-        .reveal .math { 
-            font-size: 1.25em; 
-            background: rgba(0,0,0,0.4);
-            padding: 15px 30px;
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.1);
-            display: inline-block;
-            margin: 20px 0 !important;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            color: #fff;
-        }
-        
-        .reveal code {
-            font-family: 'Fira Code', monospace;
-        }
-        .code-wrapper pre {
-            border-radius: 12px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
-            border: 1px solid rgba(255,255,255,0.1);
-            padding: 10px;
-        }
+      .reveal h2 {
+        color: var(--secondary-accent);
+        border-bottom: 2px solid rgba(0, 210, 255, 0.3);
+        padding-bottom: 10px;
+        display: inline-block;
+        margin-bottom: 30px;
+      }
+      .reveal h3 {
+        color: #f1fa8c;
+        font-size: 1.3em;
+        margin-top: 15px;
+      }
 
-        .highlight-box {
-            background: rgba(255, 75, 75, 0.1);
-            border-left: 4px solid var(--primary-accent);
-            padding: 15px 25px;
-            border-radius: 0 8px 8px 0;
-            margin: 20px 0;
-        }
-        
-        .info-box {
-            background: rgba(0, 210, 255, 0.1);
-            border-left: 4px solid var(--secondary-accent);
-            padding: 15px 25px;
-            border-radius: 0 8px 8px 0;
-            margin: 20px 0;
-        }
-        
-        .title-slide h2 { border-bottom: none; font-size: 3em; margin-bottom: 0;}
-        .title-slide h3 { color: #fff; font-weight: 300; margin-top: 0; }
-        
-        .flex-container {
-            display: flex;
-            gap: 30px;
-        }
-        .flex-col {
-            flex: 1;
-        }
+      .reveal p,
+      .reveal li {
+        font-family: "Inter", sans-serif;
+        font-weight: 300;
+        line-height: 1.6;
+      }
+
+      .reveal ul {
+        margin-left: 1.5em;
+      }
+      .reveal li {
+        margin-bottom: 15px;
+      }
+
+      .reveal .math {
+        font-size: 1.25em;
+        background: rgba(0, 0, 0, 0.4);
+        padding: 15px 30px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        display: inline-block;
+        margin: 20px 0 !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        color: #fff;
+      }
+
+      .reveal code {
+        font-family: "Fira Code", monospace;
+      }
+      .code-wrapper pre {
+        border-radius: 12px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 10px;
+      }
+
+      .highlight-box {
+        background: rgba(255, 75, 75, 0.1);
+        border-left: 4px solid var(--primary-accent);
+        padding: 15px 25px;
+        border-radius: 0 8px 8px 0;
+        margin: 20px 0;
+      }
+
+      .info-box {
+        background: rgba(0, 210, 255, 0.1);
+        border-left: 4px solid var(--secondary-accent);
+        padding: 15px 25px;
+        border-radius: 0 8px 8px 0;
+        margin: 20px 0;
+      }
+
+      .title-slide h2 {
+        border-bottom: none;
+        font-size: 3em;
+        margin-bottom: 0;
+      }
+      .title-slide h3 {
+        color: #fff;
+        font-weight: 300;
+        margin-top: 0;
+      }
+
+      .flex-container {
+        display: flex;
+        gap: 30px;
+      }
+      .flex-col {
+        flex: 1;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="reveal">
-        <div class="slides">
-            
-            <section class="title-slide" style="text-align: center;">
-                <h2>Breaking AES-128</h2>
-                <h3>Mathematical Foundations of DPA & CPA</h3>
-                <div style="margin-top: 50px; font-size: 0.8em; opacity: 0.8;">
-                    <p>Interactive Presentation</p>
-                </div>
-                <p class="fragment fade-up" style="margin-top:40px; color: var(--secondary-accent);"><em>Press Space to begin</em></p>
-            </section>
+      <div class="slides">
+        <section class="title-slide" style="text-align: center">
+          <h2>Breaking AES-128</h2>
+          <h3>Mathematical Foundations of DPA & CPA</h3>
+          <div style="margin-top: 50px; font-size: 0.8em; opacity: 0.8">
+            <p>Interactive Presentation</p>
+          </div>
+          <p
+            class="fragment fade-up"
+            style="margin-top: 40px; color: var(--secondary-accent)"
+          >
+            <em>Press Space to begin</em>
+          </p>
+        </section>
 
-            <section>
-                <section>
-                    <h2>1. The Target: AES-128</h2>
-                    <p class="fragment">Focus on the very first round, specifically the <strong>SubBytes (S-Box)</strong> operation.</p>
-                    <div class="fragment flex-container align-items-center">
-                        <div class="flex-col">
-                            <p>Intermediate value \( v \) is calculated as:</p>
-                        </div>
-                        <div class="flex-col" style="text-align: right;">
-                            \[ v = SBOX [ p \oplus k ] \]
-                        </div>
-                    </div>
-                </section>
-                <section>
-                    <h2>AES Vulnerability</h2>
-                    <ul style="font-size:0.9em">
-                        <li class="fragment"><strong>\( p \)</strong>: Known plaintext byte.</li>
-                        <li class="fragment"><strong>\( k \)</strong>: Unknown target key byte (0 to 255).</li>
-                        <li class="fragment"><strong>SBOX</strong>: Highly non-linear substitution table.</li>
-                    </ul>
-                    <div class="fragment highlight-box">
-                        <strong>Why target the S-Box?</strong><br>
-                        The strong non-linearity means incorrect key guesses will produce drastically different and unpredictable binary outputs, making the correct key stand out.
-                    </div>
-                </section>
-            </section>
+        <section>
+          <section>
+            <h2>1. The Target: AES-128</h2>
+            <p class="fragment">
+              Focus on the very first round, specifically the
+              <strong>SubBytes (S-Box)</strong> operation.
+            </p>
+            <div class="fragment flex-container align-items-center">
+              <div class="flex-col">
+                <p>Intermediate value \( v \) is calculated as:</p>
+              </div>
+              <div class="flex-col" style="text-align: right">
+                \[ v = SBOX [ p \oplus k ] \]
+              </div>
+            </div>
+          </section>
+          <section>
+            <h2>AES Vulnerability</h2>
+            <ul style="font-size: 0.9em">
+              <li class="fragment">
+                <strong>\( p \)</strong>: Known plaintext byte.
+              </li>
+              <li class="fragment">
+                <strong>\( k \)</strong>: Unknown target key byte (0 to 255).
+              </li>
+              <li class="fragment">
+                <strong>SBOX</strong>: Highly non-linear substitution table.
+              </li>
+            </ul>
+            <div class="fragment highlight-box">
+              <strong>Why target the S-Box?</strong><br />
+              The strong non-linearity means incorrect key guesses will produce
+              drastically different and unpredictable binary outputs, making the
+              correct key stand out.
+            </div>
+          </section>
+        </section>
 
-            <section>
-                <h2>2. Leakage Models</h2>
-                <p class="fragment">Microcontrollers leak power proportional to the data they process in registers and buses.</p>
-                <div class="fragment info-box">
-                    <h3 style="margin-top: 0;">Hamming Weight (HW)</h3>
-                    <p style="font-size: 0.9em; margin-bottom: 0;">The number of 1-bits transitioning in a register:</p>
-                    <div style="text-align: center;">
-                        \[ HW(v) = \sum_{j=0}^{7} v_j \]
-                    </div>
-                    <p style="text-align: center; color: var(--secondary-accent); font-size: 0.8em; margin-top: 0;">Example: \( HW(01100010_2) = 3 \)</p>
-                </div>
-            </section>
+        <section>
+          <h2>2. Leakage Models</h2>
+          <p class="fragment">
+            Microcontrollers leak power proportional to the data they process in
+            registers and buses.
+          </p>
+          <div class="fragment info-box">
+            <h3 style="margin-top: 0">Hamming Weight (HW)</h3>
+            <p style="font-size: 0.9em; margin-bottom: 0">
+              The number of 1-bits transitioning in a register:
+            </p>
+            <div style="text-align: center">
+              \[ HW(v) = \sum_{j=0}^{7} v_j \]
+            </div>
+            <p
+              style="
+                text-align: center;
+                color: var(--secondary-accent);
+                font-size: 0.8em;
+                margin-top: 0;
+              "
+            >
+              Example: \( HW(01100010_2) = 3 \)
+            </p>
+          </div>
+        </section>
 
-            <section>
-                <section>
-                    <h2>3. Correlation Power Analysis</h2>
-                    <p class="fragment">Compares real power traces (\( t_i \)) against a theoretical leakage model (\( h_i \)).</p>
-                    <div class="fragment" style="text-align: center;">
-                        \[ h_i = HW(SBOX[p_i \oplus \hat{k}]) \]
-                        <p><small>where \( \hat{k} \) is our key guess.</small></p>
-                    </div>
-                </section>
-                <section>
-                    <h2>Pearson Correlation</h2>
-                    <div class="fragment" style="text-align: center; margin: 30px 0;">
-                        \[ \rho = \frac{\sum_{i=1}^N (t_i - \bar{t})(h_i - \bar{h})}{\sqrt{\sum_{i=1}^N (t_i - \bar{t})^2 \sum_{i=1}^N (h_i - \bar{h})^2}} \]
-                    </div>
-                    <div class="flex-container fragment">
-                        <div class="flex-col info-box" style="margin-top: 0; background: rgba(80, 250, 123, 0.1); border-color: #50fa7b;">
-                            <h4 style="color: #50fa7b; margin: 0 0 10px 0;">Correct Key</h4>
-                            \( |\rho| \approx 1 \)
-                        </div>
-                        <div class="flex-col highlight-box" style="margin-top: 0;">
-                            <h4 style="color: var(--primary-accent); margin: 0 0 10px 0;">Incorrect Guess</h4>
-                            \( \rho \approx 0 \) (Noise)
-                        </div>
-                    </div>
-                </section>
-            </section>
+        <section>
+          <section>
+            <h2>3. Correlation Power Analysis</h2>
+            <p class="fragment">
+              Compares real power traces (\( t_i \)) against a theoretical
+              leakage model (\( h_i \)).
+            </p>
+            <div class="fragment" style="text-align: center">
+              \[ h_i = HW(SBOX[p_i \oplus \hat{k}]) \]
+              <p><small>where \( \hat{k} \) is our key guess.</small></p>
+            </div>
+          </section>
+          <section>
+            <h2>Pearson Correlation</h2>
+            <div class="fragment" style="text-align: center; margin: 30px 0">
+              \[ \rho = \frac{\sum_{i=1}^N (t_i - \bar{t})(h_i -
+              \bar{h})}{\sqrt{\sum_{i=1}^N (t_i - \bar{t})^2 \sum_{i=1}^N (h_i -
+              \bar{h})^2}} \]
+            </div>
+            <div class="flex-container fragment">
+              <div
+                class="flex-col info-box"
+                style="
+                  margin-top: 0;
+                  background: rgba(80, 250, 123, 0.1);
+                  border-color: #50fa7b;
+                "
+              >
+                <h4 style="color: #50fa7b; margin: 0 0 10px 0">Correct Key</h4>
+                \( |\rho| \approx 1 \)
+              </div>
+              <div class="flex-col highlight-box" style="margin-top: 0">
+                <h4 style="color: var(--primary-accent); margin: 0 0 10px 0">
+                  Incorrect Guess
+                </h4>
+                \( \rho \approx 0 \) (Noise)
+              </div>
+            </div>
+          </section>
+        </section>
 
-            <section>
-                <section>
-                    <h2>4. Differential Power Analysis</h2>
-                    <p class="fragment">Instead of total bit flips, we target a <strong>single selection bit</strong> \( b \).</p>
-                    <div class="fragment" style="text-align: center;">
-                        \[ D(p_i, \hat{k}, b) = \text{bit}_b(SBOX[p_i \oplus \hat{k}]) \in \{0, 1\} \]
-                    </div>
-                </section>
-                <section>
-                    <h2>Difference of Means (DoM)</h2>
-                    <p class="fragment" style="font-size: 0.9em;">Partition the measured traces horizontally based on \( D \):</p>
-                    
-                    <div class="flex-container fragment" style="font-size: 0.85em;">
-                        <div class="flex-col" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
-                            <strong>Set 1:</strong> \( S_1 = \{ t_i \mid D = 1 \} \)
-                        </div>
-                        <div class="flex-col" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
-                            <strong>Set 0:</strong> \( S_0 = \{ t_i \mid D = 0 \} \)
-                        </div>
-                    </div>
+        <section>
+          <section>
+            <h2>4. Differential Power Analysis</h2>
+            <p class="fragment">
+              Instead of total bit flips, we target a
+              <strong>single selection bit</strong> \( b \).
+            </p>
+            <div class="fragment" style="text-align: center">
+              \[ D(p_i, \hat{k}, b) = \text{bit}_b(SBOX[p_i \oplus \hat{k}]) \in
+              \{0, 1\} \]
+            </div>
+          </section>
+          <section>
+            <h2>Difference of Means (DoM)</h2>
+            <p class="fragment" style="font-size: 0.9em">
+              Partition the measured traces horizontally based on \( D \):
+            </p>
 
-                    <div class="fragment" style="text-align: center; margin-top: 20px;">
-                        \[ \Delta = \frac{1}{|S_1|}\sum_{i \in S_1} t_i - \frac{1}{|S_0|}\sum_{i \in S_0} t_i \]
-                    </div>
-                    <p class="fragment" style="text-align: center; color: var(--secondary-accent);">The correct key yields the largest magnitude \( \Delta \) peak.</p>
-                </section>
-            </section>
+            <div class="flex-container fragment" style="font-size: 0.85em">
+              <div
+                class="flex-col"
+                style="
+                  background: rgba(255, 255, 255, 0.05);
+                  padding: 15px;
+                  border-radius: 8px;
+                "
+              >
+                <strong>Set 1:</strong> \( S_1 = \{ t_i \mid D = 1 \} \)
+              </div>
+              <div
+                class="flex-col"
+                style="
+                  background: rgba(255, 255, 255, 0.05);
+                  padding: 15px;
+                  border-radius: 8px;
+                "
+              >
+                <strong>Set 0:</strong> \( S_0 = \{ t_i \mid D = 0 \} \)
+              </div>
+            </div>
 
-            <section>
-                <h2>5. Hardware Acquisition</h2>
-                <div class="highlight-box fragment">
-                    <strong>The Problem:</strong> Standard Arduino <code>analogRead()</code> is too slow and jittery for precise temporal alignment.
-                </div>
-                <div class="fragment code-wrapper">
-                    <pre><code class="language-c" data-trim data-line-numbers="1-2|4,6|8">
+            <div class="fragment" style="text-align: center; margin-top: 20px">
+              \[ \Delta = \frac{1}{|S_1|}\sum_{i \in S_1} t_i -
+              \frac{1}{|S_0|}\sum_{i \in S_0} t_i \]
+            </div>
+            <p
+              class="fragment"
+              style="text-align: center; color: var(--secondary-accent)"
+            >
+              The correct key yields the largest magnitude \( \Delta \) peak.
+            </p>
+          </section>
+        </section>
+
+        <section>
+          <h2>5. Hardware Acquisition</h2>
+          <div class="highlight-box fragment">
+            <strong>The Problem:</strong> Standard Arduino
+            <code>analogRead()</code> is too slow and jittery for precise
+            temporal alignment.
+          </div>
+          <div class="fragment code-wrapper">
+            <pre><code class="language-c" data-trim data-line-numbers="1-2|4,6|8">
 // Free-Running ADC Setup (AVR)
 // Aligns directly with AES execution timing
 
@@ -216,14 +335,16 @@ void setupADC() {
     ADCSRB = 0; // Free running mode
 }
                     </code></pre>
-                </div>
-            </section>
+          </div>
+        </section>
 
-            <section>
-                <h2>6. Python Vectorization</h2>
-                <p class="fragment">Executing DPA rapidly over thousands of traces using NumPy:</p>
-                <div class="fragment code-wrapper">
-                    <pre><code class="language-python" data-trim data-line-numbers="1-2|4-6">
+        <section>
+          <h2>6. Python Vectorization</h2>
+          <p class="fragment">
+            Executing DPA rapidly over thousands of traces using NumPy:
+          </p>
+          <div class="fragment code-wrapper">
+            <pre><code class="language-python" data-trim data-line-numbers="1-2|4-6">
 # DPA Partitioning in Py
 selection = ((SBOX[plaintexts ^ key_guess] >> bit) & 1).astype(bool)
 
@@ -231,49 +352,53 @@ group1_mean = traces[selection].mean(axis=0)
 group0_mean = traces[~selection].mean(axis=0)
 difference_of_means = group1_mean - group0_mean
                     </code></pre>
-                </div>
-            </section>
+          </div>
+        </section>
 
-            <section>
-                <h2>7. Key Takeaways</h2>
-                <div class="flex-container" style="flex-direction: column; gap: 15px;">
-                    <div class="fragment info-box" style="margin: 0;">
-                        <strong>CPA (Correlation):</strong> Uses a complete leakage model (HW). Needs fewer traces.
-                    </div>
-                    <div class="fragment info-box" style="margin: 0;">
-                        <strong>DPA (Differential):</strong> Assumes minimal correlation (1 bit). Needs more traces.
-                    </div>
-                    <div class="fragment highlight-box" style="margin: 0;">
-                        <strong>Crucial Requirement:</strong> Signal-to-Noise Ratio (SNR) and strict temporal alignment are absolute requirements for both!
-                    </div>
-                </div>
-            </section>
+        <section>
+          <h2>7. Key Takeaways</h2>
+          <div class="flex-container" style="flex-direction: column; gap: 15px">
+            <div class="fragment info-box" style="margin: 0">
+              <strong>CPA (Correlation):</strong> Uses a complete leakage model
+              (HW). Needs fewer traces.
+            </div>
+            <div class="fragment info-box" style="margin: 0">
+              <strong>DPA (Differential):</strong> Assumes minimal correlation
+              (1 bit). Needs more traces.
+            </div>
+            <div class="fragment highlight-box" style="margin: 0">
+              <strong>Crucial Requirement:</strong> Signal-to-Noise Ratio (SNR)
+              and strict temporal alignment are absolute requirements for both!
+            </div>
+          </div>
+        </section>
 
-            <section style="text-align: center;">
-                <h2 style="border-bottom: none; font-size: 3em;">Questions?</h2>
-                <p style="opacity: 0.7;">Thank you.</p>
-                <div style="margin-top: 50px;">
-                    <small>Press <strong>ESC</strong> for slide overview.</small>
-                </div>
-            </section>
-        </div>
+        <section style="text-align: center">
+          <h2 style="border-bottom: none; font-size: 3em">Questions?</h2>
+          <p style="opacity: 0.7">Thank you.</p>
+          <div style="margin-top: 50px">
+            <small>Press <strong>ESC</strong> for slide overview.</small>
+          </div>
+        </section>
+      </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/plugin/math/math.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/plugin/highlight/highlight.min.js"></script>
     <script>
-        Reveal.initialize({
-            hash: true,
-            slideNumber: 'c/t',
-            transition: 'slide',
-            backgroundTransition: 'fade',
-            plugins: [ RevealMath.MathJax2, RevealHighlight ],
-            math: {
-                mathjax: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js',
-                config: 'TeX-AMS_HTML-full'
-            }
-        });
+      Reveal.initialize({
+        hash: true,
+        slideNumber: "c/t",
+        transition: "slide",
+        backgroundTransition: "fade",
+        plugins: [RevealMath.MathJax2, RevealHighlight],
+        math: {
+          mathjax:
+            "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js",
+          config: "TeX-AMS_HTML-full",
+        },
+      });
     </script>
-</body>
+  </body>
 </html>
