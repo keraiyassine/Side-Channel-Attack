@@ -184,11 +184,11 @@ def print_results_dpa(results: list[ByteDPAResult], known_key_hex: str | None = 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Differential Power Analysis (DPA) for AES-128")
-    parser.add_argument("--csv", default="traces.csv", help="Path to CSV trace file")
+    parser.add_argument("--csv", default="dataset/dataset-800samples-10K.csv", help="Path to CSV trace file")
     parser.add_argument("--bit", type=int, default=0, help="Selection bit (0-7, default 0)")
     parser.add_argument(
         "--known-key",
-        default=None,
+        default="2B 7E 15 16 28 AE D2 A6 AB F7 15 88 09 CF 4F 3C",
         help="Optional 16-byte key for verification (spaces allowed)",
     )
     args = parser.parse_args()
