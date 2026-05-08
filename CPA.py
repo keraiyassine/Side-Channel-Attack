@@ -45,7 +45,7 @@ def parse_hex_byte(text: str) -> int:
     return int(str(text).strip(), 16)
 
 
-def load_traces(csv_path: str) -> tuple[np.ndarray, np.ndarray]:
+def load_traces(csv_path: str, max_traces: int | None = None) -> tuple[np.ndarray, np.ndarray]:
     """
     Step 1: Load plaintext bytes and power traces from CSV.
 
@@ -54,6 +54,12 @@ def load_traces(csv_path: str) -> tuple[np.ndarray, np.ndarray]:
     - traces: shape (num_traces, num_samples), dtype float64
     """
     df = pd.read_csv(csv_path)
+
+    # Optionally keep only the first max_traces rows.
+    if max_traces is not None:
+        if max_traces <= 0:
+            raise ValueError("max_traces must be > 0")
+        df = df.iloc[:max_traces].copy()
 
     pt_cols = [f"pt_byte_{i}" for i in range(16)]
     power_cols = [col for col in df.columns if col.startswith("power_t")]
@@ -237,15 +243,21 @@ def print_results(results: list[ByteCPAResult], known_key_hex: str | None = None
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Simple step-by-step CPA for AES-128")
-    parser.add_argument("--csv", default="traces.csv", help="Path to CSV trace file")
+    parser.add_argument("--csv", default="dataset/dataset-800samples-10K.csv", help="Path to CSV trace file")
     parser.add_argument(
         "--known-key",
-        default=None,
+        default="2B 7E 15 16 28 AE D2 A6 AB F7 15 88 09 CF 4F 3C",
         help="Optional 16-byte key for verification (spaces allowed)",
+    )
+    parser.add_argument(
+        "--n-traces",
+        type=int,
+        default=None,
+        help="Optional number of traces to use (example: 10000)",
     )
     args = parser.parse_args()
 
-    plaintexts, traces = load_traces(args.csv)
+    plaintexts, traces = load_traces(args.csv, max_traces=args.n_traces)
     print(f"Loaded traces: {plaintexts.shape[0]}")
     print(f"Samples per trace: {traces.shape[1]}")
 

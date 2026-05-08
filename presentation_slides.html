@@ -1,0 +1,406 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Side-Channel Attacks on AES-128</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reset.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/theme/black.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/plugin/highlight/atom-one-dark.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;700;900&family=Source+Sans+3:wght@300;400;600;700&family=Fira+Code:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --ink: #0b0b0f;
+        --paper: #f5efe4;
+        --teal: #17bebb;
+        --amber: #f2a65a;
+        --rose: #f06449;
+      }
+      body {
+        background:
+          radial-gradient(
+            1200px 700px at 15% 10%,
+            rgba(23, 190, 187, 0.18),
+            transparent
+          ),
+          radial-gradient(
+            900px 600px at 85% 85%,
+            rgba(240, 100, 73, 0.18),
+            transparent
+          ),
+          #0c0e12;
+        font-family: "Source Sans 3", sans-serif;
+        color: var(--paper);
+      }
+      .reveal {
+        font-size: 28px;
+      }
+      .reveal h1,
+      .reveal h2,
+      .reveal h3 {
+        font-family: "Fraunces", serif;
+        text-transform: none;
+        letter-spacing: -0.02em;
+        color: var(--paper);
+      }
+      .reveal h1 {
+        font-size: 2.6em;
+      }
+      .reveal h2 {
+        font-size: 1.7em;
+        margin-bottom: 12px;
+      }
+      .reveal h3 {
+        font-size: 1.1em;
+        color: #f7d8a7;
+      }
+      .reveal p,
+      .reveal li {
+        line-height: 1.5;
+        font-weight: 300;
+      }
+      .reveal .slides {
+        text-align: left;
+      }
+      .pill {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: rgba(23, 190, 187, 0.15);
+        border: 1px solid rgba(23, 190, 187, 0.45);
+        color: #b7f3f1;
+        font-size: 0.65em;
+      }
+      .card {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 14px;
+        padding: 16px 18px;
+      }
+      .accent {
+        color: var(--teal);
+      }
+      .accent-rose {
+        color: var(--rose);
+      }
+      .accent-amber {
+        color: var(--amber);
+      }
+      .two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 22px;
+      }
+      .three-col {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+      .plot {
+        width: 100%;
+        max-height: 55vh;
+        object-fit: contain;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+      }
+      .code-block pre {
+        max-height: 46vh;
+        overflow: auto;
+        border-radius: 12px;
+      }
+      .code-block code {
+        font-family: "Fira Code", monospace;
+        font-size: 0.72em;
+      }
+      .small {
+        font-size: 0.78em;
+      }
+      @media (max-width: 1100px) {
+        .two-col,
+        .three-col {
+          grid-template-columns: 1fr;
+        }
+        .reveal {
+          font-size: 24px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <section style="text-align: center">
+          <div class="pill">AES-128 · CPA · DPA</div>
+          <h1>Side-Channel Attacks on AES-128</h1>
+          <h3>From Trace Collection to Key Recovery</h3>
+          <p class="small" style="margin-top: 24px">
+            Real plots generated from our dataset
+          </p>
+        </section>
+
+        <section>
+          <h2>Roadmap</h2>
+          <ol>
+            <li>What is a side-channel?</li>
+            <li>What are traces and how we collect them</li>
+            <li>Hardware setup and alignment</li>
+            <li>CPA and DPA math (definitions)</li>
+            <li>Real plots from our dataset</li>
+            <li>Countermeasures and impact</li>
+          </ol>
+        </section>
+
+        <section>
+          <h2>What is a Side-Channel?</h2>
+          <div class="two-col">
+            <div class="card">
+              <strong>Definition</strong><br />
+              Attacks that recover secrets from physical leakage, not the AES
+              math itself.
+            </div>
+            <div class="card">
+              <strong>Key Idea</strong><br />
+              The implementation leaks during intermediate operations.
+            </div>
+          </div>
+          <div class="three-col" style="margin-top: 18px">
+            <div class="card">Power</div>
+            <div class="card">EM Radiation</div>
+            <div class="card">Timing</div>
+          </div>
+        </section>
+
+        <section>
+          <h2>What is a Trace?</h2>
+          <div class="two-col">
+            <div>
+              <p>
+                A <span class="accent">trace</span> is a time-series of power
+                samples captured while the device encrypts a plaintext.
+              </p>
+              <ul class="small">
+                <li>Each trace = one encryption</li>
+                <li>Samples are indexed by time</li>
+                <li>We compare traces across many encryptions</li>
+              </ul>
+            </div>
+            <div>
+              <img
+                class="plot"
+                src="slides_assets/trace_example.png"
+                alt="Power trace example"
+              />
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h2>Trace Collection Pipeline</h2>
+          <div class="two-col">
+            <div class="card">
+              <ol class="small">
+                <li>Send plaintext to device</li>
+                <li>Trigger ADC sampling</li>
+                <li>Run AES encryption</li>
+                <li>Capture samples</li>
+                <li>Store plaintext + trace in CSV</li>
+              </ol>
+            </div>
+            <div class="card">
+              <strong>Data Format</strong><br />
+              <span class="small">pt_byte_0..15, power_t0..power_tN</span>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h2>Hardware Setup</h2>
+          <div class="two-col">
+            <div class="card">
+              <strong>Key Requirements</strong>
+              <ul class="small">
+                <li>Stable power measurement path</li>
+                <li>Consistent sampling window</li>
+                <li>Low jitter in acquisition</li>
+              </ul>
+            </div>
+            <div class="card">
+              <strong>Capture Method</strong><br />
+              External oscilloscope records the power waveform while a script
+              handles trigger/export.
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h2>Oscilloscope Capture (Alignment)</h2>
+          <div class="two-col">
+            <div class="card">
+              <strong>Trigger</strong><br />
+              GPIO trigger marks AES start for consistent timing.
+            </div>
+            <div class="card">
+              <strong>Export</strong><br />
+              Capture script exports the waveform into CSV traces.
+            </div>
+          </div>
+          <p class="small" style="margin-top: 12px">
+            This keeps the same time window across traces and reduces jitter.
+          </p>
+        </section>
+
+        <section>
+          <h2>Key Recovery</h2>
+          <div class="two-col">
+            <div class="card">
+              <strong>Byte-by-Byte</strong><br />
+              Each AES key byte is recovered independently.
+            </div>
+            <div class="card">
+              <strong>Why it Works</strong><br />
+              First-round S-Box depends on one plaintext byte and one key byte.
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h2>CPA: Leakage Model</h2>
+          <div class="two-col">
+            <div>
+              <p>Target the first round S-Box output:</p>
+              \[ v = SBOX[p \oplus k] \]
+              <p>Hamming Weight model:</p>
+              \[ h_i = HW(v_i) \]
+            </div>
+            <div class="card">
+              <strong>Definition</strong><br />
+              Hamming Weight counts 1-bits in a byte (0..8).
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h2>CPA: Pearson Correlation</h2>
+          <p>
+            For each key guess \( \hat{k} \), correlate predicted leakage with
+            measured traces.
+          </p>
+          \[ \rho = \frac{\sum_{i=1}^N (t_i - \bar{t})(h_i -
+          \bar{h})}{\sqrt{\sum_{i=1}^N (t_i - \bar{t})^2 \sum_{i=1}^N (h_i -
+          \bar{h})^2}} \]
+          <p class="small">
+            Score each guess by \(\max_t |\rho(\hat{k}, t)|\).
+          </p>
+        </section>
+
+        <section>
+          <h2>CPA Result (Real Data)</h2>
+          <img
+            class="plot"
+            src="slides_assets/cpa_curve.png"
+            alt="CPA correlation curve"
+          />
+          <p class="small">
+            Correct key shows a clear correlation peak at the S-Box timing.
+          </p>
+        </section>
+
+        <section>
+          <h2>DPA: Selection Function</h2>
+          <p>DPA splits traces by one bit of the S-Box output:</p>
+          \[ D(p_i, \hat{k}, b) = \text{bit}_b(SBOX[p_i \oplus \hat{k}]) \in
+          \{0,1\} \]
+          <div class="card small">
+            Two groups: \(S_1\) where bit=1 and \(S_0\) where bit=0.
+          </div>
+        </section>
+
+        <section>
+          <h2>DPA: Difference of Means</h2>
+          \[ \Delta(t) = \frac{1}{|S_1|}\sum_{i \in S_1} t_i(t) -
+          \frac{1}{|S_0|}\sum_{i \in S_0} t_i(t) \]
+          <p class="small">
+            The correct key guess maximizes \(\max_t |\Delta(t)|\).
+          </p>
+        </section>
+
+        <section>
+          <h2>DPA Result (Real Data)</h2>
+          <img
+            class="plot"
+            src="slides_assets/dpa_curve.png"
+            alt="DPA DoM curve"
+          />
+          <p class="small">The correct guess creates a strong DoM peak.</p>
+        </section>
+
+        <section>
+          <h2>Countermeasures</h2>
+          <div class="three-col">
+            <div class="card">Random Delay</div>
+            <div class="card">Dummy Operations</div>
+            <div class="card">Shuffling</div>
+          </div>
+          <div class="three-col" style="margin-top: 14px">
+            <div class="card">Simple Masking</div>
+            <div class="card">Boolean Masking</div>
+            <div class="card">Noise Injection</div>
+          </div>
+        </section>
+
+        <section>
+          <h2>Countermeasure Impact (Real Data)</h2>
+          <img
+            class="plot"
+            src="slides_assets/countermeasures.png"
+            alt="Countermeasure impact"
+          />
+          <p class="small">
+            CPA peak drops under countermeasures (baseline vs protected
+            datasets).
+          </p>
+        </section>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/plugin/math/math.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/plugin/highlight/highlight.min.js"></script>
+    <script>
+      Reveal.initialize({
+        hash: true,
+        navigationMode: "linear",
+        slideNumber: "c/t",
+        transition: "slide",
+        backgroundTransition: "fade",
+        width: 1280,
+        height: 720,
+        margin: 0.06,
+        minScale: 0.6,
+        maxScale: 1.0,
+        plugins: [RevealMath.MathJax2, RevealHighlight],
+        math: {
+          mathjax:
+            "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js",
+          config: "TeX-AMS_HTML-full",
+        },
+      });
+    </script>
+  </body>
+</html>
